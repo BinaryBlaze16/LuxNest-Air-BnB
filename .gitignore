@@ -1,2 +1,72 @@
-.env
+# ==========================================
+# Dependencies
+# ==========================================
 node_modules/
+*/node_modules/
+client/node_modules/
+server/node_modules/
+
+# ==========================================
+# Environment & Secrets (Keep .env.example)
+# ==========================================
+.env
+.env.*
+!.env.example
+*.env.local
+server/.env
+server/.env.*
+!server/.env.example
+client/.env
+client/.env.*
+!client/.env.example
+
+# ==========================================
+# Production Builds
+# ==========================================
+dist/
+client/dist/
+build/
+client/build/
+
+# ==========================================
+# Operating System Files
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# ==========================================
+# Logs & Debugging
+# ==========================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# ==========================================
+# IDE & Editor Settings
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================================
+# Uploaded Media (Preserve directory structure)
+# ==========================================
+server/uploads/*
+!server/uploads/.gitkeep
+
+# ==========================================
+# Temporary & Cache Artifacts
+# ==========================================
+.tempmediaStorage/
+.user_uploaded/
+scratch/
+.cache/
+.eslintcache

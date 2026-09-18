@@ -1,0 +1,85 @@
+services:
+  # ------------------------------------------
+  # 1. MongoDB Database Container
+  # ------------------------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: luxnest-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - luxnest-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ------------------------------------------
+  # 2. Express Backend REST API
+  # ------------------------------------------
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: luxnest-server
+    restart: unless-stopped
+    ports:
+      - "5050:5050"
+    environment:
+      - PORT=5050
+      - NODE_ENV=development
+      - LOCAL_MONGODB_URI=mongodb://mongodb:27017/luxnest
+      - MONGODB_URI=mongodb://mongodb:27017/luxnest
+      - CLIENT_URL=http://localhost:5173
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
+      - SUPABASE_SECRET_KEY=${SUPABASE_SECRET_KEY}
+      - SUPABASE_JWKS_URL=${SUPABASE_JWKS_URL}
+      - CLOUD_NAME=${CLOUD_NAME}
+      - CLOUD_API_KEY=${CLOUD_API_KEY}
+      - CLOUD_API_SECRET=${CLOUD_API_SECRET}
+      - CLOUDINARY_URL=${CLOUDINARY_URL}
+    volumes:
+      - server_uploads:/app/uploads
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - luxnest-network
+
+  # ------------------------------------------
+  # 3. React + Vite Frontend (Nginx)
+  # ------------------------------------------
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api
+    container_name: luxnest-client
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+    networks:
+      - luxnest-network
+
+# ------------------------------------------
+# Volumes & Networks
+# ------------------------------------------
+volumes:
+  mongo_data:
+    name: luxnest_mongo_data
+  server_uploads:
+    name: luxnest_server_uploads
+
+networks:
+  luxnest-network:
+    name: luxnest_network
+    driver: bridge

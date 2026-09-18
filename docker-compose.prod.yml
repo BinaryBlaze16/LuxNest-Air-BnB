@@ -1,0 +1,60 @@
+services:
+  # ------------------------------------------
+  # MongoDB Database
+  # ------------------------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: luxnest-mongodb-prod
+    restart: always
+    volumes:
+      - mongo_prod_data:/data/db
+    networks:
+      - luxnest-prod-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------
+  # All-in-One Full-Stack App (Client + Server)
+  # ------------------------------------------
+  luxnest-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: luxnest-fullstack-app
+    restart: always
+    ports:
+      - "5050:5050"
+    environment:
+      - PORT=5050
+      - NODE_ENV=production
+      - LOCAL_MONGODB_URI=mongodb://mongodb:27017/luxnest
+      - MONGODB_URI=mongodb://mongodb:27017/luxnest
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
+      - SUPABASE_SECRET_KEY=${SUPABASE_SECRET_KEY}
+      - SUPABASE_JWKS_URL=${SUPABASE_JWKS_URL}
+      - CLOUD_NAME=${CLOUD_NAME}
+      - CLOUD_API_KEY=${CLOUD_API_KEY}
+      - CLOUD_API_SECRET=${CLOUD_API_SECRET}
+      - CLOUDINARY_URL=${CLOUDINARY_URL}
+    volumes:
+      - app_uploads:/app/server/uploads
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - luxnest-prod-network
+
+volumes:
+  mongo_prod_data:
+    name: luxnest_mongo_prod_data
+  app_uploads:
+    name: luxnest_app_uploads
+
+networks:
+  luxnest-prod-network:
+    name: luxnest_prod_network
+    driver: bridge
