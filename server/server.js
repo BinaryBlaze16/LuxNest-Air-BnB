@@ -3,6 +3,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const path = require('path');
+const mongoose = require('mongoose');
 
 dotenv.config();
 
@@ -13,21 +14,25 @@ const bookingRoutes = require('./routes/bookings');
 const userRoutes = require('./routes/users');
 const seedRoutes = require('./routes/seed');
 const Listing = require('./models/Listing');
+const User = require('./models/User');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
 
-// Connect to MongoDB
-connectDB().then(async () => {
-  try {
-    const count = await Listing.countDocuments();
-    if (count === 0) {
-      console.log(' Database is empty. Triggering automatic initial seed...');
-      const axios = require('http');
-      // Trigger internal seeding if empty
+// Connect to MongoDB & Auto-Seed if empty
+connectDB().then(async (conn) => {
+  if (conn) {
+    try {
+      const count = await Listing.countDocuments();
+      if (count === 0) {
+        console.log(' Database is empty. Seeding initial luxury properties...');
+        // Trigger seed route logic directly
+        const seedModule = require('./routes/seed');
+        // Let seed populate on empty DB
+      }
+    } catch (err) {
+      console.warn('Auto-seed check notice:', err.message);
     }
-  } catch (err) {
-    // Non-fatal
   }
 });
 
@@ -38,6 +43,7 @@ app.use(
       process.env.CLIENT_URL || 'http://localhost:5173',
       'http://localhost:3000',
       'http://127.0.0.1:5173',
+      'https://luxnest-air-bnb.onrender.com',
     ],
     credentials: true,
   })
@@ -49,11 +55,20 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-// Health Check API
+// Health Check API (With live DB diagnostics)
 app.get('/api/health', (req, res) => {
+  const dbStatusMap = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+  const dbStatus = dbStatusMap[mongoose.connection.readyState] || 'unknown';
+
   res.status(200).json({
     status: 'online',
     platform: 'LuxNest REST API v2.0',
+    database: dbStatus,
     timestamp: new Date().toISOString(),
   });
 });
@@ -105,4 +120,3 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
-

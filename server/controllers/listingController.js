@@ -3,6 +3,13 @@ const { processUpload } = require('../config/cloudinary');
 
 // Get all listings with advanced filters, search, pagination, and sorting
 exports.getAllListings = async (req, res) => {
+  const mongoose = require('mongoose');
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'MongoDB database is not connected. Please ensure MONGODB_URI is set in Render Environment Variables and 0.0.0.0/0 is whitelisted in MongoDB Atlas Network Access.',
+    });
+  }
   try {
     const {
       category,
